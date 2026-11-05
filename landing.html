@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ЯВЬ — соцсеть и мессенджер</title>
+<meta name="description" content="ЯВЬ — соцсеть и мессенджер: личные чаты с E2E-шифрованием, звонки и демонстрация экрана, лента, совместные «Моменты». Android, Windows, Linux, Веб.">
+<meta name="theme-color" content="#060709">
+<meta property="og:title" content="ЯВЬ — будь в яви">
+<meta property="og:description" content="Соцсеть и мессенджер. Пиши, звони, показывай экран. Без лишнего шума.">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700;800;900&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#060709; --fg:#eef1f3; --muted:#848a92; --faint:#4f555d;
+    --accent:#35e7c6; --accent2:#9ef0ff; --line:#171b20; --card:#0c0f13; --card2:#0e1217;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  html,body{height:100%}
+  body{background:var(--bg);color:var(--fg);font-family:"Manrope",system-ui,sans-serif;
+    min-height:100%;overflow-x:hidden;position:relative;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+
+  /* ── фон в тему ЯВЬ: CRT-сканлайны + медленный луч + виньетка ── */
+  .bg{position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:radial-gradient(130% 90% at 50% -10%,#0a1a1d 0%,var(--bg) 58%)}
+  .bg::before{content:"";position:absolute;inset:0;opacity:.45;
+    background:repeating-linear-gradient(to bottom,transparent 0 2px,rgba(0,0,0,.26) 2px 3px)}
+  .beam{position:fixed;left:0;right:0;height:160px;z-index:0;pointer-events:none;
+    background:linear-gradient(to bottom,transparent,rgba(53,231,198,.055),transparent);animation:beam 8s linear infinite}
+  @keyframes beam{0%{transform:translateY(-200px)}100%{transform:translateY(100vh)}}
+  .vig{position:fixed;inset:0;z-index:0;pointer-events:none;box-shadow:inset 0 0 240px 48px rgba(0,0,0,.82)}
+
+  .wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:0 16px}
+
+  /* ── навигация ── */
+  nav{position:sticky;top:0;z-index:20;backdrop-filter:blur(12px);
+    background:rgba(6,7,9,.6);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;gap:18px;height:62px}
+  .brand{font-family:"Unbounded",sans-serif;font-weight:800;font-size:22px;letter-spacing:1px;
+    display:flex;align-items:center;gap:10px}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);
+    box-shadow:0 0 14px var(--accent)}
+  nav .links{margin-left:auto;display:flex;align-items:center;gap:8px}
+  nav .links a{color:var(--muted);font-weight:600;font-size:14px;padding:8px 12px;border-radius:12px;transition:.2s}
+  nav .links a:hover{color:var(--fg);background:rgba(255,255,255,.04)}
+  nav .links .cta{color:#04120f;background:var(--accent);font-weight:700}
+  nav .links .cta:hover{background:#49f0d2;box-shadow:0 0 22px rgba(53,231,198,.4)}
+  .nav-feats{display:none}
+  @media(min-width:720px){.nav-feats{display:inline-flex}}
+
+  /* ── hero ── */
+  .hero{text-align:center;padding:86px 0 54px}
+  .hero .pill{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;
+    color:var(--accent);border:1px solid rgba(53,231,198,.3);background:rgba(53,231,198,.06);
+    padding:6px 14px;border-radius:999px;margin-bottom:26px}
+  .hero .pill .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent);
+    animation:blink 2.4s ease-in-out infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+  .hero h1{font-family:"Unbounded",sans-serif;font-weight:900;line-height:.98;letter-spacing:1px;
+    font-size:clamp(56px,16vw,140px);
+    background:linear-gradient(180deg,#fff 0%,#cfe9e6 55%,#7fd9cc 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 0 60px rgba(53,231,198,.18)}
+  .hero .tag{font-family:"Unbounded",sans-serif;font-weight:600;font-size:clamp(18px,3.6vw,30px);margin-top:18px}
+  .hero .tag b{color:var(--accent)}
+  .hero p.sub{color:var(--muted);font-size:clamp(15px,2.4vw,18px);max-width:560px;margin:18px auto 0}
+  .cta-row{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:34px}
+  .btn{display:inline-flex;align-items:center;gap:10px;padding:14px 24px;border-radius:16px;
+    font-family:"Manrope",sans-serif;font-weight:700;font-size:15px;transition:.2s;border:1px solid var(--line)}
+  .btn.primary{background:var(--accent);color:#04120f;border-color:transparent}
+  .btn.primary:hover{background:#49f0d2;transform:translateY(-2px);box-shadow:0 10px 34px rgba(53,231,198,.32)}
+  .btn.ghost{color:var(--fg);background:rgba(255,255,255,.03)}
+  .btn.ghost:hover{background:rgba(255,255,255,.07);transform:translateY(-2px);border-color:#2a3038}
+  .btn svg{width:19px;height:19px}
+  .platforms{display:flex;flex-wrap:wrap;gap:8px 18px;justify-content:center;margin-top:30px;
+    color:var(--faint);font-size:13px;font-weight:600}
+  .platforms span{display:inline-flex;align-items:center;gap:7px}
+  .platforms b{color:var(--muted);font-weight:600}
+
+  /* ── секции ── */
+  section{padding:56px 0}
+  .shead{text-align:center;max-width:640px;margin:0 auto 40px}
+  .shead .kicker{font-family:"Unbounded",sans-serif;font-weight:700;font-size:12px;letter-spacing:2px;
+    text-transform:uppercase;color:var(--accent)}
+  .shead h2{font-family:"Unbounded",sans-serif;font-weight:800;font-size:clamp(26px,5vw,40px);margin-top:12px;line-height:1.1}
+  .shead p{color:var(--muted);margin-top:14px;font-size:16px}
+
+  .grid{display:grid;grid-template-columns:1fr;gap:16px}
+  @media(min-width:640px){.grid{grid-template-columns:1fr 1fr}}
+  @media(min-width:940px){.grid{grid-template-columns:1fr 1fr 1fr}}
+  .card{background:linear-gradient(180deg,var(--card) 0%,var(--card2) 100%);
+    border:1px solid var(--line);border-radius:22px;padding:26px 24px;position:relative;overflow:hidden;transition:.25s}
+  .card::after{content:"";position:absolute;inset:0;border-radius:22px;pointer-events:none;
+    background:radial-gradient(120% 90% at 100% 0%,rgba(53,231,198,.08),transparent 55%);opacity:0;transition:.25s}
+  .card:hover{transform:translateY(-4px);border-color:#243139}
+  .card:hover::after{opacity:1}
+  .ic{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+    background:rgba(53,231,198,.1);border:1px solid rgba(53,231,198,.22);color:var(--accent);margin-bottom:18px}
+  .ic svg{width:24px;height:24px}
+  .card h3{font-family:"Unbounded",sans-serif;font-weight:700;font-size:18px;margin-bottom:9px}
+  .card p{color:var(--muted);font-size:14.5px}
+
+  /* ── блок про шифрование ── */
+  .secure{background:linear-gradient(135deg,rgba(53,231,198,.08),rgba(158,240,255,.04));
+    border:1px solid rgba(53,231,198,.2);border-radius:28px;padding:44px 32px;text-align:center;position:relative;overflow:hidden}
+  .secure .lock{width:62px;height:62px;margin:0 auto 20px;border-radius:18px;display:flex;align-items:center;justify-content:center;
+    background:rgba(53,231,198,.14);border:1px solid rgba(53,231,198,.3);color:var(--accent);box-shadow:0 0 40px rgba(53,231,198,.25)}
+  .secure .lock svg{width:30px;height:30px}
+  .secure h2{font-family:"Unbounded",sans-serif;font-weight:800;font-size:clamp(24px,4.6vw,34px);line-height:1.1}
+  .secure p{color:var(--muted);max-width:620px;margin:16px auto 0;font-size:16px}
+
+  /* ── финальный CTA ── */
+  .final{text-align:center;padding:64px 0 40px}
+  .final h2{font-family:"Unbounded",sans-serif;font-weight:900;font-size:clamp(30px,7vw,60px);line-height:1;
+    letter-spacing:1px}
+  .final h2 b{color:var(--accent)}
+  .final p{color:var(--muted);margin:16px auto 0;max-width:460px}
+
+  /* ── футер ── */
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:34px 0 48px}
+  footer .wrap{display:flex;flex-wrap:wrap;gap:16px;align-items:center;color:var(--faint);font-size:13.5px}
+  footer .flinks{margin-left:auto;display:flex;flex-wrap:wrap;gap:18px}
+  footer a{color:var(--muted);transition:.2s}
+  footer a:hover{color:var(--accent)}
+
+  /* reveal on scroll */
+  .rv{opacity:0;transform:translateY(22px);transition:opacity .6s ease,transform .6s ease}
+  .rv.in{opacity:1;transform:none}
+  @media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}.beam{animation:none}}
+</style>
+</head>
+<body>
+  <div class="bg"></div><div class="beam"></div><div class="vig"></div>
+
+  <nav>
+    <div class="wrap">
+      <a class="brand" href="#top"><span class="dot"></span>ЯВЬ</a>
+      <div class="links">
+        <a class="nav-feats" href="#features">Возможности</a>
+        <a class="nav-feats" href="#secure">Приватность</a>
+        <a href="download.html">Скачать</a>
+        <a class="cta" href="/">Открыть</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero wrap" id="top">
+    <span class="pill"><span class="dot"></span> Соцсеть и мессенджер</span>
+    <h1>ЯВЬ</h1>
+    <div class="tag">Будь в <b>яви</b>.</div>
+    <p class="sub">Пиши, звони, показывай экран. Личное — под сквозным шифрованием. Без лишнего шума и без рекламы.</p>
+    <div class="cta-row">
+      <a class="btn primary" href="/">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        Открыть веб-версию
+      </a>
+      <a class="btn ghost" href="download.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
+        Скачать приложение
+      </a>
+    </div>
+    <div class="platforms">
+      <span><b>Платформы:</b></span>
+      <span>Android</span><span>·</span><span>Windows</span><span>·</span><span>Linux</span><span>·</span><span>Веб</span>
+    </div>
+  </header>
+
+  <section id="features">
+    <div class="shead rv">
+      <div class="kicker">Возможности</div>
+      <h2>Всё для общения в одном месте</h2>
+      <p>Мессенджер, звонки, лента и совместные пространства — собрано аккуратно и работает быстро.</p>
+    </div>
+    <div class="grid">
+      <div class="card rv">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+        <h3>Личные чаты</h3>
+        <p>Переписка один-на-один со сквозным шифрованием: сообщения читаете только вы и собеседник.</p>
+      </div>
+      <div class="card rv">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div>
+        <h3>Звонки и экран</h3>
+        <p>Голос и видео, демонстрация экрана и голосовые комнаты — для друзей и команд.</p>
+      </div>
+      <div class="card rv">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16M4 12h16M4 19h10"/></svg></div>
+        <h3>Лента «Явь»</h3>
+        <p>Посты, лайки, комментарии и превью ссылок. Рекомендации и «Новое» — как удобнее.</p>
+      </div>
+      <div class="card rv">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+        <h3>Моменты</h3>
+        <p>Совместные пространства: задачи, заметки, опросы, фото, точки встречи и общая музыка.</p>
+      </div>
+      <div class="card rv">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="3.5"/><circle cx="6.5" cy="12.5" r="2.5"/><circle cx="17" cy="16" r="3"/></svg></div>
+        <h3>Темы и стиль</h3>
+        <p>Глубокая кастомизация: пузыри, фон, акцент, свечение и шрифт. Своя аура у профиля.</p>
+      </div>
+      <div class="card rv">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 5 5.6.8-4 3.9 1 5.5L12 20l-5 2.6 1-5.5-4-3.9 5.6-.8z"/></svg></div>
+        <h3>Достижения и игры</h3>
+        <p>Коллекция ачивок с редкостями и спрятанные мини-игры — приятные детали между делом.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="secure">
+    <div class="wrap">
+      <div class="secure rv">
+        <div class="lock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+        <h2>Личное остаётся личным</h2>
+        <p>Личные сообщения шифруются сквозным шифрованием прямо на устройстве — сервер хранит только зашифрованный текст. Мы не читаем переписку и не слушаем звонки. Передача данных возможна лишь по законному требованию уполномоченных органов.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="final wrap rv">
+    <h2>Будь в <b>яви</b>.</h2>
+    <p>Открой веб-версию прямо сейчас или установи приложение на своё устройство.</p>
+    <div class="cta-row">
+      <a class="btn primary" href="/">Открыть веб-версию</a>
+      <a class="btn ghost" href="download.html">Скачать</a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <span>© <span id="yr">2026</span> DNTS Studio · ЯВЬ</span>
+      <div class="flinks">
+        <a href="/">Веб-версия</a>
+        <a href="download.html">Скачать</a>
+        <a href="privacy.html">Конфиденциальность</a>
+        <a href="terms.html">Соглашение</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Yandex.Metrika -->
+  <script type="text/javascript">
+    (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+    m[i].l=1*new Date();for(var j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r){return;}}
+    k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+    (window,document,"script","https://mc.yandex.ru/metrika/tag.js","ym");
+    ym(114022803,"init",{clickmap:true,trackLinks:true,accurateTrackBounce:true});
+  </script>
+  <noscript><div><img src="https://mc.yandex.ru/watch/114022803" style="position:absolute;left:-9999px;" alt="" /></div></noscript>
+
+  <script>
+    document.getElementById('yr').textContent=new Date().getFullYear();
+    (function(){
+      var els=document.querySelectorAll('.rv');
+      if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('in')});return;}
+      var io=new IntersectionObserver(function(en){en.forEach(function(x){
+        if(x.isIntersecting){x.target.classList.add('in');io.unobserve(x.target);}});},{threshold:.14});
+      els.forEach(function(e){io.observe(e);});
+    })();
+  </script>
+</body>
+</html>
