@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#050505">
+<meta name="robots" content="noindex">
+<title>Защита аккаунта — ЯВЬ</title>
+<style>
+  :root{ --bg:#050505; --card:#0b0d11; --line:#1c1f26; --text:#e9edf2; --muted:#9aa3ad; --accent:#9EF0FF; --danger:#ff6b81; }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--text);
+       font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;padding:24px 16px;text-align:center;}
+  .card{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:32px 24px;}
+  .logo{width:120px;height:auto;margin-bottom:18px;filter:drop-shadow(0 0 18px rgba(255,255,255,.25));}
+  h1{font-size:22px;margin:0 0 8px;}
+  p{margin:0 0 6px;color:var(--muted);font-size:15px;}
+  b{color:var(--text);}
+  button{width:100%;margin-top:22px;height:54px;border:0;border-radius:18px;background:var(--danger);color:#050505;font-weight:800;font-size:15px;cursor:pointer;}
+  button:disabled{opacity:.5;cursor:default;}
+  .hidden{display:none;}
+</style></head>
+<body>
+<div class="card">
+  <img class="logo" src="logo.png" alt="ЯВЬ">
+  <div id="ask">
+    <h1>Это были не вы?</h1>
+    <p>Мы завершим все сеансы на всех устройствах и пришлём письмо для смены пароля.</p>
+    <button id="b">Защитить аккаунт</button>
+  </div>
+  <div id="res" class="hidden">
+    <h1 id="t"></h1>
+    <p id="s"></p>
+  </div>
+</div>
+<script>
+  const t = new URLSearchParams(location.search).get('t') || '';
+  history.replaceState(null, '', location.pathname);
+  const show = (title, text) => {
+    document.getElementById('ask').classList.add('hidden');
+    document.getElementById('res').classList.remove('hidden');
+    document.getElementById('t').textContent = title;
+    document.getElementById('s').innerHTML = text;
+  };
+  if (!t) show('Ссылка неполная', 'Открой ссылку из письма ещё раз.');
+  document.getElementById('b').onclick = async () => {
+    const b = document.getElementById('b');
+    b.disabled = true;
+    try {
+      const r = await fetch('https://uuehuastnuxhrkvekcmk.supabase.co/functions/v1/device-guard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': 'sb_publishable_rtcdAho-zb17_5uX0flJnA_8rBqdes-' },
+        body: JSON.stringify({ action: 'not_me', t })
+      });
+      const d = await r.json();
+      if (d.ok) {
+        const m = d.masked ? ' на <b>' + d.masked.replace(/[<>&]/g, '') + '</b>' : '';
+        show('Аккаунт защищён', 'Все сеансы завершены. Письмо для смены пароля отправлено' + m + '.');
+      } else if (d.reason === 'expired') {
+        show('Ссылка устарела', 'Ссылка уже использована или прошло больше 7 дней. Смени пароль через «Забыл пароль?» в приложении.');
+      } else {
+        b.disabled = false;
+        show('Не получилось', 'Попробуй ещё раз чуть позже или смени пароль через «Забыл пароль?».');
+      }
+    } catch (_) {
+      b.disabled = false;
+      show('Нет соединения', 'Проверь интернет и открой ссылку ещё раз.');
+    }
+  };
+</script>
+</body></html>

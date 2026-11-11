@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ru"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#050505">
+<meta name="robots" content="noindex">
+<title>Вход — ЯВЬ</title>
+<style>
+  :root{ --bg:#050505; --card:#0b0d11; --line:#1c1f26; --text:#e9edf2; --muted:#9aa3ad; --accent:#9EF0FF; --danger:#ff6b81; }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--text);
+       font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;padding:24px 16px;text-align:center;}
+  .card{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:32px 24px;}
+  .logo{width:120px;height:auto;margin-bottom:18px;filter:drop-shadow(0 0 18px rgba(255,255,255,.25));}
+  h1{font-size:22px;margin:0 0 8px;text-shadow:0 0 18px rgba(158,240,255,.25);}
+  p{margin:0;color:var(--muted);font-size:15px;}
+  .bad h1{color:var(--danger);text-shadow:none;}
+</style></head>
+<body>
+<div class="card" id="c">
+  <img class="logo" src="logo.png" alt="ЯВЬ">
+  <h1 id="t">Вход выполнен</h1>
+  <p id="s">Возвращайся в ЯВЬ — приложение уже входит в аккаунт. Эту вкладку можно закрыть.</p>
+</div>
+<script>
+  if (new URLSearchParams(location.search).get('ok') !== '1') {
+    document.getElementById('c').classList.add('bad');
+    document.getElementById('t').textContent = 'Не получилось войти';
+    document.getElementById('s').textContent = 'Вход отменён или ссылка устарела. Вернись в ЯВЬ и попробуй ещё раз.';
+  }
+  history.replaceState(null, '', location.pathname);
+  setTimeout(() => { try { window.close(); } catch (_) {} }, 2500);
+</script>
+</body></html>

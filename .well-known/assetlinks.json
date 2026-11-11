@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "ru.yav.yav",
+      "sha256_cert_fingerprints": [
+        "60:E1:3D:B6:C7:66:EA:02:FD:45:4B:96:EF:00:67:51:90:50:27:78:E8:9E:DE:7E:48:F7:75:6B:02:8C:C7:A2"
+      ]
+    }
+  }
+]

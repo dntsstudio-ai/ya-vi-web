@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#050505">
+<meta name="robots" content="noindex">
+<title>Новый пароль — ЯВЬ</title>
+<style>
+  :root{ --bg:#050505; --card:#0b0d11; --line:#1c1f26; --text:#e9edf2; --muted:#9aa3ad; --accent:#9EF0FF; --danger:#ff6b81; }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--text);
+       font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;padding:24px 16px;}
+  .card{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:32px 24px;
+        box-shadow:0 0 60px rgba(158,240,255,.06);}
+  .logo{display:block;margin:0 auto 18px;width:120px;height:auto;filter:drop-shadow(0 0 18px rgba(255,255,255,.25));}
+  h1{font-size:22px;margin:0 0 6px;text-align:center;text-shadow:0 0 18px rgba(158,240,255,.25);}
+  p.sub{margin:0 0 22px;text-align:center;color:var(--muted);font-size:14px;}
+  label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:14px 0 6px 4px;}
+  input{width:100%;padding:14px;border-radius:14px;border:1px solid var(--line);background:#07080b;color:var(--text);font-size:15px;outline:none;}
+  input:focus{border-color:var(--accent);}
+  button{width:100%;margin-top:22px;height:54px;border:0;border-radius:18px;background:var(--accent);color:#050505;font-weight:800;font-size:15px;
+         cursor:pointer;box-shadow:0 0 24px rgba(158,240,255,.35);}
+  button:disabled{opacity:.5;cursor:default;}
+  .msg{margin-top:16px;font-size:14px;text-align:center;min-height:20px;}
+  .err{color:var(--danger);} .ok{color:var(--accent);}
+  .foot{margin-top:22px;text-align:center;font-size:12px;color:var(--muted);}
+  .foot a{color:var(--muted);}
+  .hidden{display:none;}
+</style></head>
+<body>
+<div class="card">
+  <img class="logo" src="logo.png" alt="ЯВЬ">
+  <div id="form-box">
+    <h1>Новый пароль</h1>
+    <p class="sub">Придумай новый пароль для входа в ЯВЬ.</p>
+    <form id="f" autocomplete="off">
+      <label for="p1">Новый пароль</label>
+      <input id="p1" type="password" minlength="6" placeholder="минимум 6 символов" autocomplete="new-password" required>
+      <label for="p2">Ещё раз</label>
+      <input id="p2" type="password" minlength="6" placeholder="повтори пароль" autocomplete="new-password" required>
+      <button id="b" type="submit">Сохранить пароль</button>
+    </form>
+  </div>
+  <div id="done-box" class="hidden">
+    <h1>Готово</h1>
+    <p class="sub">Пароль изменён. Все устройства вышли из аккаунта — войди заново с новым паролем.</p>
+    <button onclick="location.href='https://ya-vi.com'">Открыть ЯВЬ</button>
+  </div>
+  <div id="m" class="msg"></div>
+  <div class="foot">Ссылка одноразовая и действует ограниченное время.<br>© ЯВЬ</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+  // Адрес сервера и публичный ключ — те же, что внутри приложения (не секрет).
+  const sb = supabase.createClient(
+    'https://uuehuastnuxhrkvekcmk.supabase.co',
+    'sb_publishable_rtcdAho-zb17_5uX0flJnA_8rBqdes-',
+    { auth: { persistSession: false, detectSessionInUrl: false } }
+  );
+  const q = new URLSearchParams(location.search);
+  const tokenHash = q.get('token_hash');
+  const m = document.getElementById('m');
+  const say = (t, ok) => { m.textContent = t; m.className = 'msg ' + (ok ? 'ok' : 'err'); };
+
+  if (!tokenHash) {
+    document.getElementById('form-box').classList.add('hidden');
+    say('Ссылка неполная. Запроси восстановление пароля ещё раз в приложении.');
+  }
+  // Убираем токен из адресной строки (и из истории браузера).
+  history.replaceState(null, '', location.pathname);
+
+  document.getElementById('f').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const p1 = document.getElementById('p1').value, p2 = document.getElementById('p2').value;
+    if (p1.length < 6) return say('Пароль — минимум 6 символов');
+    if (p1 !== p2) return say('Пароли не совпадают');
+    const b = document.getElementById('b');
+    b.disabled = true; say('');
+    try {
+      // токен проверяется только сейчас: почтовые сканеры, открывшие ссылку, его не «съедят»
+      const { error: vErr } = await sb.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' });
+      if (vErr) throw new Error('link');
+      const { error: uErr } = await sb.auth.updateUser({ password: p1 });
+      if (uErr) throw uErr;
+      await sb.auth.signOut({ scope: 'global' });
+      document.getElementById('form-box').classList.add('hidden');
+      document.getElementById('done-box').classList.remove('hidden');
+      say('');
+    } catch (err) {
+      b.disabled = false;
+      const t = String(err && err.message || err);
+      if (t === 'link') say('Ссылка уже использована или устарела. Запроси новую в приложении.');
+      else if (/same|different/i.test(t)) say('Новый пароль должен отличаться от старого');
+      else if (/weak|short/i.test(t)) say('Пароль слишком простой');
+      else say('Не получилось сохранить пароль. Попробуй ещё раз.');
+    }
+  });
+</script>
+</body></html>
